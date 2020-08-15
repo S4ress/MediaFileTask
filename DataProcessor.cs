@@ -7,12 +7,12 @@ using System.Text;
 
 namespace MediaFileInfo
 {
-    class DataProcessor
+    public class DataProcessor
     {
         public void ToJson(string path, IEnumerable<MediaFile> mediaFile)
         {
-            string json = JsonConvert.SerializeObject(mediaFile, Formatting.Indented);
-            System.IO.File.WriteAllText($@"{path}", json);
+            var json = JsonConvert.SerializeObject(mediaFile, Formatting.Indented);
+            File.WriteAllText($@"{path}", json);
         }
 
         public IEnumerable<MediaFile> FromJson(string path)

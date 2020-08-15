@@ -6,7 +6,7 @@ using System.Text;
 
 namespace MediaFileInfo
 {
-    class MediaFile
+    public class MediaFile
     {
         [Key]
         public int MediaID { get; set; }

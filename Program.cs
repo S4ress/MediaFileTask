@@ -15,7 +15,7 @@ namespace MediaFileInfo
             string[] readText = File.ReadAllLines(@"..\..\..\MediaFileInfos.txt");
             for (int i = 0; i < readText.Length; i++)
             {
-                if (readText[i] == "Name;Size(bytes);Duration(seconds)")
+                if (readText[i].Equals("Name;Size(bytes);Duration(seconds)", StringComparison.OrdinalIgnoreCase))
                     continue;
                 string[] arr = readText[i].Split(';');
                 list.Add(new MediaFile() { Name = arr[0], Duration = Convert.ToInt32(arr[1]), Size = Convert.ToInt32(arr[2]) });
@@ -26,7 +26,7 @@ namespace MediaFileInfo
                 k.Print();
             }
 
-            MediaFilesManager MFM = new MediaFilesManager();
+            var MFM = new MediaFilesManager();
             //MFM.Import(list);
 
             MFM.GetAll();
@@ -36,7 +36,8 @@ namespace MediaFileInfo
 
 
             Console.WriteLine("From Json: ");
-            foreach(var k in data.FromJson(@"..\..\..\Example.json"))
+            var jsonData = data.FromJson(@"..\..\..\Example.json");
+            foreach (var k in jsonData)
             {
                 Console.WriteLine($"Name: {k.Name} / Duration: {k.Duration} / Size: {k.Size}");
             }

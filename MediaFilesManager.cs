@@ -9,89 +9,112 @@ using System.Text;
 
 namespace MediaFileInfo
 {
-    class MediaFilesManager : DbContext
+    public class MediaFilesManager
     {
-        public DbSet<MediaFile> Media { get; set; }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer(@"Server=(localdb)\mssqllocaldb;Database=MediaInfos;Trusted_Connection=True;");
-        }
-        public void Import(IEnumerable<MediaFile> k)
-        {
-            List<MediaFile> temp = new List<MediaFile>();
-            temp = k.ToList();
-            using (var context = new MediaFilesManager())
-            {
-                for (int i = 0; i < temp.Count; i++)
-                {
-                    var std = new MediaFile()
-                    {
-                        Name = temp[i].Name,
-                        Duration = temp[i].Duration,
-                        Size = temp[i].Size
-                    };
+		public void Import(IEnumerable<MediaFile> medias)
+		{
+			using (var context = new MediaFileContext())
+			{
+				context.Media.AddRange(medias);
+				context.SaveChanges();
+			}
+		}
 
-                    context.Media.Add(std);
-                    context.SaveChanges();
-                }
-            }
-        }
+		public IEnumerable<MediaFile> GetAll()
+		{
+			using (var context = new MediaFileContext())
+			{
+				return context.Media.AsNoTracking().ToList();
+			}
+			//string queryString = "SELECT Name, Size, Duration FROM dbo.Media;";
 
-        public void GetAll()
-        {
-            string queryString = "SELECT Name, Size, Duration FROM dbo.Media;";
+			//using (SqlConnection connection = new SqlConnection(@"Server=(localdb)\mssqllocaldb;Database=MediaInfos;Trusted_Connection=True;"))
+			//{
+			//    SqlCommand command = new SqlCommand(queryString, connection);
+			//    connection.Open();
 
-            using (SqlConnection connection = new SqlConnection(@"Server=(localdb)\mssqllocaldb;Database=MediaInfos;Trusted_Connection=True;"))
-            {
-                SqlCommand command = new SqlCommand(queryString, connection);
-                connection.Open();
+			//    SqlDataReader reader = command.ExecuteReader();
 
-                SqlDataReader reader = command.ExecuteReader();
+			//    Console.WriteLine("From DB:");
 
-                Console.WriteLine("From DB:");
+			//    while (reader.Read())
+			//    {
+			//        Console.WriteLine($"Name: {reader[0]} / Size: {reader[1]} / Duration: {reader[2]}");
+			//    }
 
-                while (reader.Read())
-                {
-                    Console.WriteLine($"Name: {reader[0]} / Size: {reader[1]} / Duration: {reader[2]}");
-                }
+			//    reader.Close();
+			//}
+		}
 
-                reader.Close();
-            }
-        }
+		public void Update(MediaFile mediaFile)
+		{
+			if (mediaFile.MediaID == 0)
+			{
+				using (var context = new MediaFileContext())
+				{
+					context.Media.Add(mediaFile);
+					context.SaveChanges();
+				}
+			}
+			else
+			{
 
-        public void Update(MediaFile mediaFile)
-        {
-            if(mediaFile.MediaID == 0)
-            {
-                using (var context = new MediaFilesManager())
-                {
-                    var std = new MediaFile()
-                    {
-                        Name = mediaFile.Name,
-                        Duration = mediaFile.Duration,
-                        Size = mediaFile.Size
-                    };
-                    context.Media.Add(std);
-                    context.SaveChanges();
-                }
-            }
-            else
-            {
-                using (SqlConnection connection = new SqlConnection(@"Server=(localdb)\mssqllocaldb;Database=MediaInfos;Trusted_Connection=True;"))
-                    using(SqlCommand command = connection.CreateCommand())
-                {
-                    command.CommandText = "UPDATE dbo.Media(Name, Size, Duration) VALUES (@name, @size, @duration) WHERE id = " + mediaFile.MediaID;
-                    command.Parameters.AddWithValue("@name", mediaFile.Name);
-                    command.Parameters.AddWithValue("@size", mediaFile.Size);
-                    command.Parameters.AddWithValue("@duration", mediaFile.Duration);
+				//// attached
+				//using (var context = new MediaFileContext())
+				//{
+				//	var m = context.Media.FirstOrDefault(x => x.MediaID == mediaFile.MediaID);
+				//	if (m != null)
+				//	{
+				//		m.Duration = mediaFile.Duration;
+				//		m.Size = mediaFile.Size;
+				//	}
+				//	context.SaveChanges();
+				//}
 
-                    connection.Open();
+				// detached
+				using (var context = new MediaFileContext())
+				{
+					var m = new MediaFile() { MediaID = mediaFile.MediaID };
+					var entry = context.Attach<MediaFile>(m);
+					entry.State = EntityState.Unchanged;
+					m = entry.Entity;
+					m.Duration = mediaFile.Duration;
+					m.Size = mediaFile.Size;
+					context.SaveChanges();
+				}
 
-                    command.ExecuteNonQuery();
+					//using (SqlConnection connection = new SqlConnection(@"Server=(localdb)\mssqllocaldb;Database=MediaInfos;Trusted_Connection=True;"))
+					//using (SqlCommand command = connection.CreateCommand())
+					//{
+					//	command.CommandText = "UPDATE dbo.Media(Name, Size, Duration) VALUES (@name, @size, @duration) WHERE id = " + mediaFile.MediaID;
+					//	command.Parameters.AddWithValue("@name", mediaFile.Name);
+					//	command.Parameters.AddWithValue("@size", mediaFile.Size);
+					//	command.Parameters.AddWithValue("@duration", mediaFile.Duration);
 
-                    connection.Close();
-                }
-            }
-        }
-    }
+					//	connection.Open();
+
+					//	command.ExecuteNonQuery();
+
+					//	connection.Close();
+					//}
+			}
+		}
+
+		//public class MediaFileProxy : MediaFile
+		//{
+		//	private bool durationChanged = false;
+		//	public int Duration
+		//	{
+		//		get
+		//		{
+		//			return base.Duration;
+		//		}
+		//		set
+		//		{
+		//			base.Duration = value;
+		//			durationChanged = true;
+		//		}
+		//	}
+		//}
+	}
 }
